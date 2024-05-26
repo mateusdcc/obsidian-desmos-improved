@@ -118,9 +118,8 @@ export class Renderer {
         const api_version = settings.use_legacy_desmos_api ? "v1.5" : "v1.6";
         const htmlHead = `<script id="desmos-api" src="https://www.desmos.com/api/${api_version}/calculator.js?apiKey=dcb31709b452b1cf9dc26972add0fda6"></script>`;
         const htmlBody = `
-            <div id="calculator-${hash}" style="width: ${graphSettings.width}px; height: ${
-            graphSettings.height
-        }px;"></div>
+            <div id="calculator-${hash}" style="width: ${graphSettings.width}px; height: ${graphSettings.height
+            }px;"></div>
             <script>
                 const options = {
                     settingsMenu: false,
@@ -130,6 +129,9 @@ export class Renderer {
                     trace: false,
                     xAxisNumbers: ${!graphSettings.hideAxisNumbers},
                     yAxisNumbers: ${!graphSettings.hideAxisNumbers},
+                    showXAxis: ${graphSettings.showXAxis},
+                    showYAxis: ${graphSettings.showYAxis},
+                    // invertedColors: true,
                     showGrid: ${graphSettings.grid},
                     // Desmos takes a value of 'false' for radians and 'true' for degrees
                     degreeMode: ${graphSettings.degreeMode === DegreeMode.Degrees},
@@ -159,9 +161,8 @@ export class Renderer {
                         for (const id in calculator.expressionAnalysis) {
                             const analysis = calculator.expressionAnalysis[id];
                             if (analysis.isError) {
-                                parent.postMessage({ t: "desmos-graph", d: "error", o: "${
-                                    window.origin
-                                }", data: analysis.errorMessage, hash: "${hash}" }, "${window.origin}");
+                                parent.postMessage({ t: "desmos-graph", d: "error", o: "${window.origin
+            }", data: analysis.errorMessage, hash: "${hash}" }, "${window.origin}");
                             }
                         }
                     });
@@ -169,9 +170,8 @@ export class Renderer {
 
                 calculator.asyncScreenshot({ showLabels: true, format: "svg" }, (data) => {
                     document.body.innerHTML = "";
-                    parent.postMessage({ t: "desmos-graph", d: "render", o: "${
-                        window.origin
-                    }", data, hash: "${hash}" }, "${window.origin}");
+                    parent.postMessage({ t: "desmos-graph", d: "render", o: "${window.origin
+            }", data, hash: "${hash}" }, "${window.origin}");
                 });
             </script>
         `;

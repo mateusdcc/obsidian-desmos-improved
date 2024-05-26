@@ -1,5 +1,6 @@
 import Desmos from "./main";
 import { PluginSettingTab, App, Setting } from "obsidian";
+import { GraphSettings, DegreeMode } from "./graph/interface"
 
 export enum CacheLocation {
     Memory = "Memory",
@@ -14,6 +15,8 @@ export interface Settings {
     // /** The debounce timer (in ms) */
     // debounce: number;
     cache: CacheSettings;
+    /** The default graph settings */
+    graph_settings: GraphSettings;
 }
 
 export interface CacheSettings {
@@ -29,7 +32,22 @@ const DEFAULT_SETTINGS_STATIC: Omit<Settings, "version"> = {
         enabled: true,
         location: CacheLocation.Memory,
     },
+    graph_settings: {
+        width: 600,
+        height: 400,
+        left: -7,
+        right: 7,
+        bottom: -7,
+        top: 7,
+        grid: true,
+        degreeMode: DegreeMode.Radians,
+        showYAxis: true,
+        showXAxis: true,
+        invertedColors: false,
+        hideAxisNumbers: false,
+    }
 };
+
 
 /** Get the default settings for the given plugin. This simply uses `DEFAULT_SETTINGS_STATIC` and patches the version from the manifest. */
 export function DEFAULT_SETTINGS(plugin: Desmos): Settings {
@@ -39,6 +57,22 @@ export function DEFAULT_SETTINGS(plugin: Desmos): Settings {
     };
 }
 
+function constructGraphSettingElement(this: any, containerEl: any, description: string, setting: keyof GraphSettings) {
+    return new Setting(containerEl)
+        .setName(description)
+        .setDesc(`The ${description} of the rendered graph`)
+        .addText((text) =>
+            text.setValue(this.plugin.settings.graph_settings[setting].toString()).onChange(async (value) => {
+                const val = Number(value);
+                if (Number.isNaN(val)) {
+                    this.plugin.settings.graph_settings[setting] = DEFAULT_SETTINGS_STATIC.graph_settings[setting];
+                } else {
+                    this.plugin.settings.graph_settings[setting] = val;
+                }
+                await this.plugin.saveSettings();
+            })
+        );
+}
 /** Attempt to migrate the given settings object to the current structure */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function migrateSettings(plugin: Desmos, settings: any): Settings {
@@ -75,6 +109,75 @@ export class SettingsTab extends PluginSettingTab {
         //             await this.plugin.saveSettings();
         //         })
         //     );
+
+        containerEl.createEl("h1", { text: "Plugin Settings" });
+        containerEl.createEl("h2", { text: "Graph Settings" });
+        containerEl.createEl("p", { text: "**You must reload obsidian for the changes to apply**" });
+        constructGraphSettingElement.call(this, containerEl, "Width", "width");
+        constructGraphSettingElement.call(this, containerEl, "Height", "height");
+        constructGraphSettingElement.call(this, containerEl, "Left Bound", "left");
+        constructGraphSettingElement.call(this, containerEl, "Right Bound", "right");
+        constructGraphSettingElement.call(this, containerEl, "Bottom Bound", "bottom");
+        constructGraphSettingElement.call(this, containerEl, "Top Bound", "top");
+        new Setting(containerEl)
+            .setName("Grid")
+            .setDesc("Whether to show the grid or not")
+            .addToggle((toggle) =>
+                toggle.setValue(this.plugin.settings.graph_settings.grid).onChange(async (value) => {
+                    this.plugin.settings.graph_settings.grid = value;
+                    await this.plugin.saveSettings();
+                })
+            );
+        new Setting(containerEl)
+            .setName("Degree Mode")
+            .setDesc("The degree mode to use for trigonometry functions")
+            .addDropdown((dropdown) =>
+                dropdown
+                    .addOption(DegreeMode.Radians, "Radians")
+                    .addOption(DegreeMode.Degrees, "Degrees")
+                    .setValue(this.plugin.settings.graph_settings.degreeMode)
+                    .onChange(async (value) => {
+                        this.plugin.settings.graph_settings.degreeMode = value as DegreeMode;
+                        await this.plugin.saveSettings();
+                    })
+            );
+        new Setting(containerEl)
+            .setName("Hide Axis Numbers")
+            .setDesc("Whether to hide all axis numbers")
+            .addToggle((toggle) =>
+                toggle.setValue(this.plugin.settings.graph_settings.hideAxisNumbers).onChange(async (value) => {
+                    this.plugin.settings.graph_settings.hideAxisNumbers = value;
+                    await this.plugin.saveSettings();
+                })
+            );
+        new Setting(containerEl)
+            .setName("Show X Axis")
+            .setDesc("Whether to show the x-axis")
+            .addToggle((toggle) =>
+                toggle.setValue(this.plugin.settings.graph_settings.showXAxis).onChange(async (value) => {
+                    this.plugin.settings.graph_settings.showXAxis = value;
+                    await this.plugin.saveSettings();
+                })
+            );
+        new Setting(containerEl)
+            .setName("Show Y Axis")
+            .setDesc("Whether to show the y-axis")
+            .addToggle((toggle) =>
+                toggle.setValue(this.plugin.settings.graph_settings.showYAxis).onChange(async (value) => {
+                    this.plugin.settings.graph_settings.showYAxis = value;
+                    await this.plugin.saveSettings();
+                })
+            );
+        new Setting(containerEl)
+            .setName("Inverted Colors")
+            .setDesc("Whether to invert the colors of the graph")
+            .addToggle((toggle) =>
+                toggle.setValue(this.plugin.settings.graph_settings.invertedColors).onChange(async (value) => {
+                    this.plugin.settings.graph_settings.invertedColors = value;
+                    await this.plugin.saveSettings();
+                })
+            );
+        containerEl.createEl("h2", { text: "Cache" });
 
         new Setting(containerEl)
             .setName("Cache")
@@ -122,6 +225,7 @@ export class SettingsTab extends PluginSettingTab {
             }
         }
 
+        containerEl.createEl("h2", { text: "Misc" });
         new Setting(containerEl)
             .setName("Use Legacy Desmos API")
             .setDesc(

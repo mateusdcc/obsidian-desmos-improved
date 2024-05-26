@@ -1,7 +1,7 @@
 {
-    "id": "obsidian-desmos",
-    "name": "Desmos",
-    "version": "0.6.6",
+    "id": "obsidian-desmos-improved",
+    "name": "Desmos Improved",
+    "version": "0.7.0",
     "minAppVersion": "0.9.12",
     "description": "Embed Desmos graphs into your notes",
     "author": "Nigecat"

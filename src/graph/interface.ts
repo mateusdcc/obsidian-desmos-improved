@@ -17,6 +17,12 @@ export interface GraphSettings {
     degreeMode: DegreeMode;
     /** Whether to hide all axis numbers, defaults to `false` */
     hideAxisNumbers: boolean;
+    /** Whether to show the x-axis, defaults to `true`*/
+    showXAxis: boolean;
+    /** Whether to show the y-axis, defaults to `false`*/
+    showYAxis: boolean;
+    /** Whether to invert the colors of the graph or not, defaults to `false`*/
+    invertedColors: boolean;
     /** The label placed below x axis */
     xAxisLabel?: string;
     /** The label placed beside the y axis */

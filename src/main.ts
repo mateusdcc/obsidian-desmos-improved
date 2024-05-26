@@ -4,6 +4,7 @@ import { Renderer } from "./renderer";
 import { renderError } from "./error";
 import { DEFAULT_SETTINGS, migrateSettings, Settings, SettingsTab } from "./settings";
 
+
 export default class Desmos extends Plugin {
     // We load the settings before accessing them, so we can ensure this object always exists
     settings!: Settings;
@@ -23,7 +24,7 @@ export default class Desmos extends Plugin {
 
         this.registerMarkdownCodeBlockProcessor("desmos-graph", async (source, el) => {
             try {
-                const graph = Graph.parse(source);
+                const graph = Graph.parse(source, this.settings.graph_settings);
                 await this.renderer.render(graph, el);
             } catch (err) {
                 if (err instanceof Error) {

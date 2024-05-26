@@ -7,22 +7,6 @@ const math = create(all, { number: "number" });
 /** The maximum dimensions of a graph */
 const MAX_SIZE = 99999;
 
-const DEFAULT_GRAPH_SETTINGS: GraphSettings = {
-    width: 600,
-    height: 400,
-    left: -10,
-    right: 10,
-    bottom: -7,
-    top: 7,
-    grid: true,
-    degreeMode: DegreeMode.Radians,
-    hideAxisNumbers: false,
-};
-
-const DEFAULT_GRAPH_WIDTH = Math.abs(DEFAULT_GRAPH_SETTINGS.left) + Math.abs(DEFAULT_GRAPH_SETTINGS.right);
-
-const DEFAULT_GRAPH_HEIGHT = Math.abs(DEFAULT_GRAPH_SETTINGS.bottom) + Math.abs(DEFAULT_GRAPH_SETTINGS.top);
-
 export interface PotentialErrorHint {
     view: HTMLSpanElement;
 }
@@ -52,6 +36,9 @@ function parseColor(value: string): Color | null {
 
 export class Graph {
     private _hash: Promise<Hash>;
+    private static defaultGraphWidth: number;
+    private static defaultGraphHeight: number;
+    private static defaultGraphSettings: GraphSettings;
 
     public readonly equations: Equation[];
     public readonly settings: GraphSettings;
@@ -62,7 +49,8 @@ export class Graph {
     public constructor(
         equations: Equation[],
         settings: Partial<GraphSettings>,
-        potentialErrorHint?: PotentialErrorHint
+        defaultGraphSettings: GraphSettings,
+        potentialErrorHint?: PotentialErrorHint,
     ) {
         this.equations = equations;
         this.potentialErrorHint = potentialErrorHint;
@@ -74,8 +62,8 @@ export class Graph {
         //  this means that if we extend the settings with new fields pre-existing graphs will have the same hash
         this._hash = calculateHash({ equations, settings });
 
-        // Apply defaults
-        this.settings = { ...DEFAULT_GRAPH_SETTINGS, ...settings };
+        // Check if default settings are provided, otherwise use the default settings (lazy work cuz me lazy)
+        this.settings = { ...defaultGraphSettings, ...settings };
 
         // Validate settings
         Graph.validateSettings(this.settings);
@@ -89,7 +77,8 @@ export class Graph {
         }
     }
 
-    public static parse(source: string): Graph {
+
+    public static parse(source: string, graph_setting: GraphSettings): Graph {
         let potentialErrorHint;
         const split = source.split("---");
 
@@ -113,7 +102,7 @@ export class Graph {
         // If there is more than one segment then the first one will contain the settings
         const settings = split.length > 1 ? Graph.parseSettings(split[0]) : {};
 
-        return new Graph(equations, settings, potentialErrorHint);
+        return new Graph(equations, settings, graph_setting, potentialErrorHint);
     }
 
     public async hash(): Promise<Hash> {
@@ -276,6 +265,9 @@ export class Graph {
                 switch (key) {
                     // Boolean fields
                     case "hideAxisNumbers":
+                    case "invertedColors":
+                    case "showXAxis":
+                    case "showYAxis":
                     case "grid": {
                         if (!value) {
                             (graphSettings[key] as boolean) = true;
@@ -359,30 +351,30 @@ export class Graph {
         if (
             settings.left !== undefined &&
             settings.right === undefined &&
-            settings.left >= DEFAULT_GRAPH_SETTINGS.right
+            settings.left >= this.defaultGraphSettings.right
         ) {
-            settings.right = settings.left + DEFAULT_GRAPH_WIDTH;
+            settings.right = settings.left + this.defaultGraphWidth;
         }
         if (
             settings.left === undefined &&
             settings.right !== undefined &&
-            settings.right <= DEFAULT_GRAPH_SETTINGS.left
+            settings.right <= this.defaultGraphSettings.left
         ) {
-            settings.left = settings.right - DEFAULT_GRAPH_WIDTH;
+            settings.left = settings.right - this.defaultGraphWidth;
         }
         if (
             settings.bottom !== undefined &&
             settings.top === undefined &&
-            settings.bottom >= DEFAULT_GRAPH_SETTINGS.top
+            settings.bottom >= this.defaultGraphSettings.top
         ) {
-            settings.top = settings.bottom + DEFAULT_GRAPH_HEIGHT;
+            settings.top = settings.bottom + this.defaultGraphHeight;
         }
         if (
             settings.bottom === undefined &&
             settings.top !== undefined &&
-            settings.top <= DEFAULT_GRAPH_SETTINGS.bottom
+            settings.top <= this.defaultGraphSettings.bottom
         ) {
-            settings.bottom = settings.top - DEFAULT_GRAPH_HEIGHT;
+            settings.bottom = settings.top - this.defaultGraphHeight;
         }
 
         return settings;
